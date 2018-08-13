@@ -1,5 +1,6 @@
 (ns mostly-adequate-clojure.core
-  (:require [clojure.edn :as edn]))
+  (:require [clojure.edn :as edn]
+            [clj-http.client :as http]))
 
 ;; Box type
 (defprotocol BoxOp
@@ -106,4 +107,14 @@
 (def max-new2 (partial reduce highest Integer/MIN_VALUE))
 
 ;; composing
-(comp )
+(defn url [tag]
+  (str "https://api.flickr.com/services/feeds/photos_public.gne?tags="
+       tag "cats&format=json&jsoncallback=?"))
+(defn get-json [callback url]
+  (http/get
+    "https://api.flickr.com/services/feeds/photos_public.gne?tags=cats&format=json&jsoncallback=?"
+    {:accept :json :async? true}
+    callback callback))
+
+(defn render )
+(def ^:dynamic flickr (comp (partial get-json) url))
