@@ -1,5 +1,6 @@
 (ns mostly-adequate-clojure.core
   (:require [clojure.edn :as edn]
+            [clojure.string :as string]
             [clj-http.client :as http]))
 
 ;; Box type
@@ -116,5 +117,23 @@
     {:accept :json :async? true}
     callback callback))
 
-(defn render )
 (def ^:dynamic flickr (comp (partial get-json) url))
+
+;; IO
+(defprotocol IOProto
+  (iomap [_ f]))
+(defrecord IO [unsafeF]
+  IOProto
+  (iomap [_ g] (->IO (comp g unsafeF))))
+
+(defn some-url [] "http://example.com/hello?key1=val1&searchTerm=wafflehouse")
+(def href-io (->IO some-url))
+(defn split-amp [s] (string/split s #"&"))
+(defn split-eq [s] (string/split s #"="))
+(defn split-q [s] (string/split s #"\?"))
+(def to-pairs ^:dynamic (comp (partial map split-eq) split-amp))
+(def params ^:dynamic (comp to-pairs last split-q))
+(defn find-param [k] (iomap href-io (comp (partial filter (comp (partial = k) first)) params)))
+((:unsafeF (find-param "key1")))
+; => (["key1" "val1"])
+;; async tasks
